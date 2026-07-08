@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@xuan/agent": ["packages/agent/src/index.ts"],
+      "@xuan/core": ["packages/core/src/index.ts"],
+      "@xuan/rag": ["packages/rag/src/index.ts"]
+    }
+  },
+  "include": [
+    "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx",
+    "packages/*/src/**/*.ts",
+    "tools/*/src/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

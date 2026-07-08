@@ -1,0 +1,19 @@
+{
+  "name": "xuan-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agentic RAG workbench for Chinese metaphysics, starting with Zi Wei Dou Shu.",
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "tsc -p tsconfig.workspace.json --noEmit",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "demo:ziwei": "pnpm build && pnpm --filter @xuan/cli demo:ziwei"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
