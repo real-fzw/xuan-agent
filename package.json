@@ -2,7 +2,7 @@
   "name": "xuan-agent",
   "version": "0.1.0",
   "private": true,
-  "description": "Agentic RAG workbench for Chinese metaphysics, starting with Zi Wei Dou Shu.",
+  "description": "以紫微斗数为起点的 Agentic RAG 工作台。",
   "license": "MIT",
   "scripts": {
     "build": "pnpm -r build",

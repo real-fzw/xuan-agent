@@ -1,62 +1,74 @@
 # XuanAgent
 
-Agentic RAG workbench for Chinese metaphysics, starting with Zi Wei Dou Shu.
+以紫微斗数为起点的 Agentic RAG 工作台。
 
-> Deterministic chart calculation, source-grounded retrieval, agent planning, and auditable interpretation reports.
+> 确定性排盘、来源可追溯检索、Agent 工具编排，以及可审计的引用式解读报告。
 
-XuanAgent is not a black-box fortune-telling site. The project separates:
+XuanAgent 不是普通算命网页，也不是让 LLM 黑箱编故事的项目。它把系统拆成四层：
 
-- **Chart engine**: deterministic calendrical and Zi Wei Dou Shu calculations.
-- **Knowledge layer**: licensed or public-domain source ingestion, chunking, citation, and retrieval.
-- **Agent layer**: tool-calling workflow that explains a chart with explicit evidence.
-- **Workbench**: API, Web UI, CLI, and MCP surfaces for developers and researchers.
+- **排盘引擎**：历法、干支、宫位、星曜等确定性计算。
+- **知识层**：合法来源或公版材料的登记、切分、引用和检索；RAG 框架优先采用 LangChain.js，后续 Agent 编排接 LangGraph。
+- **Agent 层**：用工具调用组织排盘、检索和报告生成。
+- **工作台**：面向开发者和研究者的 API、Web、CLI、MCP 等入口。
 
-## Why Start With Zi Wei Dou Shu
+## 为什么先做紫微斗数
 
-Zi Wei Dou Shu has a rich symbolic structure: twelve palaces, major stars, auxiliary stars, four transformations, decade luck, yearly flow, and multiple schools. That structure is perfect for a developer-facing project because it can be modeled, tested, visualized, and cited.
+紫微斗数有非常清晰的结构：十二宫、主星、辅星、四化、大限、流年，以及不同流派之间的规则差异。这种结构适合被建模、测试、可视化和引用，也适合用来验证“确定性排盘 + RAG 引用 + Agent 解读”的工程边界。
 
-## Quick Demo
+后续可以扩展到八字、奇门、易经等体系，但当前重点是把紫微斗数核心链路打扎实。
+
+## 快速体验
 
 ```bash
 pnpm install
 pnpm demo:ziwei
 ```
 
-The current demo uses a minimal experimental ruleset and local sample notes. It is a framework milestone, not an authoritative Zi Wei Dou Shu calculator yet.
+当前 demo 使用早期 `ziwei.common-v0` 规则集和仓库内原创示例笔记。它已经能生成命宫、身宫、十二宫、五行局、紫微星落宫、天府系与十四主星等带 trace 的核心事实，但还不是完整、权威、多流派的正式紫微斗数排盘器。
 
-## Monorepo Layout
+## RAG 框架
+
+`@xuan/rag` 现在提供 LangChain.js 适配层：
+
+- 将本地 `RagIndex` 转成 LangChain `Document`，metadata 中保留 `citation`、`sourceId`、`chunkId`、`license` 和 `usage`。
+- 将本地检索器包装成 LangChain `BaseRetriever`。
+- 提供 `xuan_rag_search` LangChain tool，供后续 Agentic RAG 工作流调用。
+
+私有资料仍只允许在本地进入 `data/private/` 或 `corpus/private/`，不得提交书籍、课程、扫描件、OCR 文本、向量索引或衍生私有语料。
+
+## Monorepo 结构
 
 ```text
-packages/core    Zi Wei Dou Shu domain model and deterministic chart engine
-packages/rag     Source registry, chunking, citations, and retrieval interfaces
-packages/agent   Tool orchestration and report planning
-packages/cli     Developer CLI and demos
-packages/mcp     MCP server skeleton for external AI assistants
-apps/api         HTTP API skeleton
-apps/web         React workbench skeleton
-tools/ingest     Local corpus ingestion CLI skeleton
-docs             Architecture, roadmap, source policy, and domain notes
+packages/core    紫微斗数领域模型与确定性排盘引擎
+packages/rag     来源登记、切分、引用与检索接口
+packages/agent   工具编排与报告规划
+packages/cli     开发者命令行与 demo
+packages/mcp     面向外部 AI 助手的 MCP 服务骨架
+apps/api         HTTP API 骨架
+apps/web         React 工作台骨架
+tools/ingest     本地语料导入工具骨架
+docs             架构、路线图、来源政策与领域说明
 ```
 
-## Principles
+## 核心原则
 
-1. **Algorithms before prose**: chart data should come from versioned deterministic rules, not LLM guesses.
-2. **Citations before claims**: every interpretation should point to chart facts and retrieved source passages.
-3. **Local-first by default**: users can run private charts and private corpora locally.
-4. **No bundled copyrighted books**: users may ingest legally owned materials locally; this repo ships only original examples and public-compatible metadata.
-5. **Multiple schools, no fake certainty**: different Zi Wei Dou Shu schools should be represented as explicit rulesets.
+1. **先算法，后解读**：排盘数据必须来自版本化、可测试的确定性规则，不能来自 LLM 猜测。
+2. **先引用，后断语**：每条解释都应该指向排盘事实和检索到的来源片段。
+3. **默认本地优先**：用户可以在本地处理私有命盘和私有语料。
+4. **不内置版权资料**：仓库只放原创示例、公开兼容的元数据和工具管道；用户可在本地导入自己合法拥有的材料。
+5. **多流派，不装确定**：不同紫微斗数流派的差异应被显式建模为不同 ruleset，而不是被压平成一套没有出处的答案。
 
-## Initial Roadmap
+## 初始路线图
 
-- Milestone 0: project skeleton, domain model, RAG/Agent contracts.
-- Milestone 1: accurate lunar calendar provider, true solar time option, chart fixtures.
-- Milestone 2: Zi Wei Dou Shu twelve palaces, life/body palace, five-element bureau, major star placement.
-- Milestone 3: four transformations, decade/year/month/day flow.
-- Milestone 4: retrieval corpus tooling and cited interpretation reports.
-- Milestone 5: Web workbench, MCP tools, and public demo site.
+- Milestone 0：项目骨架、领域模型、RAG/Agent 契约。
+- Milestone 1：准确历法 provider、真太阳时选项、排盘 fixtures。
+- Milestone 2：紫微斗数十二宫、命宫/身宫、五行局、主星安星。
+- Milestone 3：四化、大限、流年、流月、流日。
+- Milestone 4：语料工具链和带引用的解读报告。
+- Milestone 5：Web 工作台、MCP 工具和公开 demo。
 
-## Cultural and Legal Note
+## 文化与法律说明
 
-This project is for cultural computing, research, education, and entertainment. It does not provide medical, legal, financial, or life-critical advice.
+本项目用于文化计算、研究、教育与娱乐，不提供医疗、法律、金融或人生重大决策建议。
 
-Some modern Zi Wei Dou Shu materials, including books by contemporary teachers, may be copyrighted. XuanAgent does not include those texts. See [docs/source-policy.md](docs/source-policy.md) for how to use legally provided materials in a private local RAG index.
+部分现代紫微斗数材料，包括当代老师的书籍、课程和讲义，可能受版权保护。XuanAgent 不包含这些文本。如何在本地私有 RAG 索引中使用合法拥有的资料，请见 [docs/source-policy.md](docs/source-policy.md)。

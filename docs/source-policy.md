@@ -1,39 +1,47 @@
-# Source Policy
+# 来源政策
 
-XuanAgent supports RAG, but the repository must not bundle copyrighted books or private study notes without permission.
+XuanAgent 支持 RAG，但仓库本身不得在未获授权的情况下包含版权书籍、课程文本或私人学习笔记。
 
-## Allowed In This Repository
+## 可以进入本仓库的内容
 
-- Original explanations written by contributors.
-- Public-domain classics where the specific edition is legally reusable.
-- Metadata about sources, such as title, author, school, topic tags, and bibliographic notes.
-- Short quotations within applicable legal limits, only when necessary and properly attributed.
+- 贡献者原创说明。
+- 明确可合法复用的公版经典或开放材料。
+- 来源元数据，例如书名、作者、流派、主题标签、版本和书目信息。
+- 在适用法律允许范围内、必要且正确标注出处的短引用。
 
-## Not Allowed In This Repository
+## 不可以进入本仓库的内容
 
-- Full scans, OCR dumps, or copied chapters of modern copyrighted books.
-- Paid course transcripts or private class notes.
-- Large paraphrases that reconstruct a copyrighted source.
+- 现代版权书籍的完整扫描、OCR 文本或章节复制。
+- 付费课程逐字稿、内部讲义或私人学习笔记。
+- 足以重构版权来源的大段改写或摘编。
 
-## Local Private Corpora
+## 本地私有语料
 
-Users can ingest legally owned materials into `corpus/private/` or `data/private/`. These paths are ignored by Git.
+用户可以把自己合法拥有的材料放入 `book/`、`corpus/private/` 或 `data/private/`。这些路径已经被 Git 忽略，不应提交到远端仓库。
 
-The ingestion pipeline should store:
+推荐分工：
 
-- source title
-- author or teacher
-- edition or provenance
-- usage scope
+- `book/`：原始书籍、讲义、图片、PDF、Word 等本地资料。
+- `corpus/private/`：从原始资料抽取出的本地私有文本片段。
+- `data/private/`：本地 manifest、索引、embedding 和检索缓存。
+
+即使使用 LangChain.js、向量库或其他 RAG 框架，私有文本、OCR 结果、embedding、向量索引和可还原原文的检索缓存也只能留在这些本地私有目录中。
+
+导入管道应该保存以下元数据：
+
+- 来源标题
+- 作者或老师
+- 版本或来源说明
+- 使用范围
 - chunk id
-- page or section locator
-- topic tags
+- 页码或章节定位
+- 主题标签
 
-## About Ni Haixia Materials
+## 关于倪海厦资料
 
-Ni Haixia's Zi Wei Dou Shu materials can inspire the system design if the user owns them, but this repository should not ship those book contents. The intended workflow is:
+如果用户合法拥有倪海厦紫微斗数相关资料，可以在本地用它们启发系统设计或构建私有索引，但本仓库不得发布这些书籍、课程或 OCR 内容。推荐工作流是：
 
-1. User places legally owned text files in `corpus/private/ni-haixia/`.
-2. `tools/ingest` builds a local index.
-3. Generated reports cite local chunk ids and user-owned source metadata.
-4. No private corpus files are committed to GitHub.
+1. 用户将合法拥有的文本放入 `corpus/private/ni-haixia/`。
+2. `tools/ingest` 构建本地索引。
+3. 生成报告时引用本地 chunk id 和用户自有来源元数据。
+4. 不把任何私有语料提交到 GitHub。

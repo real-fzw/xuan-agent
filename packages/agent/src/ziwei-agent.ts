@@ -18,7 +18,14 @@ export async function answerZiweiQuestion(
     topK: 6
   });
 
-  const coreFacts = selectFacts(chart.facts, ["life_palace.branch", "body_palace.branch"]);
+  const coreFacts = selectFacts(chart.facts, [
+    "birth.sexagenary_year",
+    "life_palace.branch",
+    "body_palace.branch",
+    "life_palace.stem_branch",
+    "five_element_bureau",
+    "star.ziwei.branch"
+  ]);
 
   return {
     chart,
@@ -27,7 +34,7 @@ export async function answerZiweiQuestion(
     sections: [
       {
         title: "排盘事实",
-        body: "已生成实验版紫微斗数命盘骨架。当前报告只陈列可追踪事实，不做未经验证的断语。",
+        body: "已生成紫微斗数核心排盘事实。当前报告只陈列可追踪事实，不做未经验证的断语。",
         facts: coreFacts,
         citations: []
       },
@@ -42,7 +49,7 @@ export async function answerZiweiQuestion(
       }
     ],
     caveats: [
-      "当前 ruleset 是 experimental-v0，不能作为正式紫微斗数结论。",
+      "当前 ruleset 是 ziwei.common-v0，已覆盖命身宫、十二宫、五行局与紫微星定位，但仍需更多流派 fixtures。",
       "解释层尚未接入大模型；本报告用于验证 Agentic RAG 数据流。",
       "请勿把输出用于医疗、法律、财务或人生重大决策。"
     ]

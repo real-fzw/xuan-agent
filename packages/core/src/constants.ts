@@ -26,6 +26,10 @@ export const EARTHLY_BRANCHES = [
   "亥"
 ] as const;
 
+export const FIVE_ELEMENTS = ["木", "火", "土", "金", "水"] as const;
+
+export const FIVE_ELEMENT_BUREAU_NUMBERS = [2, 3, 4, 5, 6] as const;
+
 export const ZIWEI_PALACE_BRANCHES = [
   "寅",
   "卯",

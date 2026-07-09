@@ -39,3 +39,12 @@ export interface RetrievalHit {
 export interface Retriever {
   search(query: RetrievalQuery): Promise<RetrievalHit[]>;
 }
+
+export interface RagIndex {
+  version: 1;
+  generatedAt: string;
+  usage: "repo-safe" | "local-private-only";
+  sources: KnowledgeSource[];
+  chunks: SourceChunk[];
+  warnings: string[];
+}

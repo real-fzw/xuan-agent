@@ -1,34 +1,41 @@
-# Zi Wei Dou Shu Domain Model
+# 紫微斗数领域模型
 
-The first domain target is Zi Wei Dou Shu.
+当前第一个领域目标是紫微斗数。
 
-## Core Objects
+## 核心对象
 
-- `BirthProfile`: gender, timezone, location, solar/lunar birth data, calendar options.
-- `LunarBirth`: lunar year, month, leap month flag, day, and birth hour branch.
-- `ZiweiChart`: twelve palaces, stars, transformations, luck cycles, and provenance.
-- `Palace`: branch, palace name, major stars, auxiliary stars, notes, and computed facts.
-- `ComputedFact`: machine-readable claim with formula id, value, and confidence.
-- `InterpretationReport`: answer, chart facts, retrieved evidence, caveats.
+- `BirthProfile`：性别、时区、地点、阳历/农历出生信息和历法选项。
+- `LunarBirth`：农历年份、月份、是否闰月、日期和出生时辰地支。
+- `ZiweiChart`：十二宫、星曜、四化、运限和溯源信息。
+- `Palace`：地支、宫名、主星、辅星、备注和计算事实。
+- `ComputedFact`：机器可读的断言，包含公式 id、值和可信度。
+- `InterpretationReport`：回答、排盘事实、检索证据和注意事项。
 
-## First Ruleset Boundary
+## 当前规则集边界
 
-The current `experimental-v0` ruleset only models palace scaffolding and life/body palace placement. It is intentionally marked experimental. The next rulesets should add:
+当前 `ziwei.common-v0` 规则集建模的是一组通用核心规则：
 
-1. Five-element bureau.
-2. Zi Wei star placement.
-3. Tian Fu system placement.
-4. Four transformations by heavenly stem.
-5. Decade and annual flow.
+1. 通过历法 provider 接口校验农历输入。
+2. 计算命宫、身宫和十二宫布局。
+3. 计算出生年干支、命宫干支、纳音和五行局。
+4. 依据农历生日和五行局定位紫微星。
+5. 依据紫微星和天府星铺排十四主星。
 
-## Testing Approach
+后续 ruleset 需要继续加入：
 
-Each formula should be backed by fixtures:
+1. 经过校验的阳历转农历和真太阳时 provider。
+2. 辅星、杂曜与神煞。
+3. 按天干起四化。
+4. 大限、流年等运限系统。
 
-- raw birth input
-- expected palace branch
-- expected star positions
-- source note
-- school/ruleset id
+## 测试策略
 
-Fixtures should include disagreements between schools instead of silently choosing one.
+每个公式都应该有 fixtures 支撑：
+
+- 原始出生输入
+- 期望宫位地支
+- 期望星曜位置
+- 来源说明
+- 流派或 ruleset id
+
+如果不同流派存在分歧，fixture 应该显式记录差异，而不是静默选择一套答案。

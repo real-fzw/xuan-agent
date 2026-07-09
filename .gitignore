@@ -14,6 +14,8 @@ coverage/
 data/private/
 data/uploads/
 corpus/private/
+book/
+books/
 10.*/
 *.qkdownloading
 packages/*/src/**/*.js

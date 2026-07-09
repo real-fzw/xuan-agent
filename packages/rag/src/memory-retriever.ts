@@ -27,12 +27,17 @@ export class MemoryRetriever implements Retriever {
     return this.chunks
       .map((chunk) => {
         const text = chunk.text.toLowerCase();
+        const tagText = chunk.tags.join(" ").toLowerCase();
         const tokenScore = tokens.reduce((score, token) => score + (text.includes(token) ? 1 : 0), 0);
+        const inferredTagScore = tokens.reduce(
+          (score, token) => score + (tagText.includes(token) ? 1 : 0),
+          0
+        );
         const tagScore = [...requiredTags].reduce(
           (score, tag) => score + (chunk.tags.includes(tag) ? 1 : 0),
           0
         );
-        return { chunk, score: tokenScore + tagScore * 2 };
+        return { chunk, score: tokenScore + inferredTagScore * 2 + tagScore * 2 };
       })
       .filter((hit) => hit.score > 0)
       .sort((left, right) => right.score - left.score)

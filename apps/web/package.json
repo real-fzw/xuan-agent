@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "dev": "pnpm build && node dist/server.js",
+    "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
     "lint": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@xuan/core": "workspace:*"
+    "@xuan/core": "workspace:*",
+    "@xuan/rag": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
