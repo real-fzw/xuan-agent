@@ -47,3 +47,21 @@ RAG 层优先采用 LangChain.js：
 - `xuan_rag_search` tool 返回原文片段、citation 和来源使用范围。
 
 LangChain/后续 LangGraph 只负责编排检索和工具调用，不参与排盘公式推断。解释层必须同时拿到排盘事实和 RAG citation；如果某条断语找不到对应事实或 citation，应标记为无依据，而不是让 LLM 补全。
+
+## 私有资料提取边界
+
+资料提取采用显式格式路由：纯文本直接解析，PDF/DOCX/PPTX 已接入本地 Docling worker，PDF 默认关闭 OCR；旧 DOC/PPT 在 macOS 使用 `textutil`，Apache Tika 保留为跨平台目标，复杂 PDF 后续可回退到 MinerU。图片不做 OCR，统一走 OpenAI-compatible Caption provider。
+
+图片 Caption 是模型生成的检索材料，不是命盘事实。每个 Caption chunk 必须携带 `rulesetId`、`formulaId`、`sourceHint` 和 `confidence`，默认置信度为 `experimental`；原图路径必须保留在 citation 中。详细契约见 [资料提取与图片 Caption 管道](extraction-pipeline.md)。
+
+远程 Caption 默认不能读取私有目录。即使已经配置 API key，也必须通过 `XUAN_ALLOW_REMOTE_PRIVATE=true` 显式确认；key 只从环境变量读取，不能进入 artifact、日志或仓库。
+
+## 文档同步原则
+
+以下变化必须与实现同时写入 `docs/`：
+
+- 新框架、模型、数据库或外部服务的引入。
+- 跨包架构和数据流变化。
+- 公共类型、索引格式、API 和 citation 契约变化。
+- 会影响准确性、版权、隐私或可复现性的技术取舍。
+- 关键 benchmark、fixtures 和验证结论。

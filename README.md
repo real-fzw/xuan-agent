@@ -36,6 +36,15 @@ pnpm demo:ziwei
 
 私有资料仍只允许在本地进入 `data/private/` 或 `corpus/private/`，不得提交书籍、课程、扫描件、OCR 文本、向量索引或衍生私有语料。
 
+本地资料管道已经支持：
+
+- Docling 提取 PDF、DOCX、PPTX，PDF 默认关闭 OCR。
+- macOS `textutil` 提取旧 DOC/PPT；跨平台 Apache Tika 适配仍在后续计划中。
+- OpenAI-compatible 视觉 API 生成图片 Caption；私有图片远程上传默认禁止。
+- 将原生文本、文档 extraction artifact 和 Caption artifact 合并为同一个带 provenance/trace 的私有 RAG index。
+
+实现和安全边界见 [资料提取与图片 Caption 管道](docs/extraction-pipeline.md)。
+
 ## Monorepo 结构
 
 ```text
@@ -46,7 +55,8 @@ packages/cli     开发者命令行与 demo
 packages/mcp     面向外部 AI 助手的 MCP 服务骨架
 apps/api         HTTP API 骨架
 apps/web         React 工作台骨架
-tools/ingest     本地语料导入工具骨架
+tools/ingest     本地语料索引、文档 artifact 和图片 Caption 工具
+tools/extract    Docling / macOS textutil 私有文档提取 worker
 docs             架构、路线图、来源政策与领域说明
 ```
 
@@ -57,6 +67,14 @@ docs             架构、路线图、来源政策与领域说明
 3. **默认本地优先**：用户可以在本地处理私有命盘和私有语料。
 4. **不内置版权资料**：仓库只放原创示例、公开兼容的元数据和工具管道；用户可在本地导入自己合法拥有的材料。
 5. **多流派，不装确定**：不同紫微斗数流派的差异应被显式建模为不同 ruleset，而不是被压平成一套没有出处的答案。
+6. **关键技术必须入文档**：框架引入、架构调整、数据契约变化、重要技术取舍和验证结果，必须与代码同步记录在 `docs/`，不能只存在于提交信息或聊天记录中。
+
+## 技术文档
+
+- [架构](docs/architecture.md)
+- [RAG 实现报告](docs/rag-implementation-report.md)
+- [资料提取与图片 Caption 管道](docs/extraction-pipeline.md)
+- [来源与版权政策](docs/source-policy.md)
 
 ## 初始路线图
 

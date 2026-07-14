@@ -35,6 +35,10 @@
 - LangChain.js `Document`、`BaseRetriever` 和 tool adapter。
 - 混合检索 adapter：关键词、向量和规则标签共同参与召回。
 - 基于 citation 的报告 schema。
+- Docling 文档提取 worker 与质量门禁。
+- Apache Tika 旧 Office 提取适配器。
+- 图片 Caption 管道；保留原图 citation 和模型推断 trace，不使用 OCR。
+- MinerU 复杂 PDF 可选回退插件。
 
 ## 4. Agent 工作台
 

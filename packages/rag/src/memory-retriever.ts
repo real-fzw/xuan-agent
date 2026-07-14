@@ -50,7 +50,10 @@ export class MemoryRetriever implements Retriever {
             sourceId: hit.chunk.sourceId,
             chunkId: hit.chunk.id,
             locator: hit.chunk.locator,
-            title: source?.title
+            title: source?.title,
+            page: hit.chunk.provenance?.page,
+            bbox: hit.chunk.provenance?.bbox,
+            assetPath: hit.chunk.provenance?.assetPath
           }
         };
       });

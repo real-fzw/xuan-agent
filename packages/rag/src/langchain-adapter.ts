@@ -25,6 +25,9 @@ export interface XuanLangChainMetadata extends Record<string, unknown> {
   license?: KnowledgeSource["license"];
   usage?: KnowledgeSource["usage"];
   tags: string[];
+  modality: SourceChunk["modality"];
+  provenance?: SourceChunk["provenance"];
+  trace?: SourceChunk["trace"];
   citation: Citation;
   score?: number;
 }
@@ -45,6 +48,8 @@ export interface XuanRagToolHit {
   text: string;
   score: number;
   tags: string[];
+  modality: SourceChunk["modality"];
+  trace?: SourceChunk["trace"];
   citation: Citation;
   source?: {
     title?: string;
@@ -89,7 +94,10 @@ function citationForChunk(chunk: SourceChunk, source?: KnowledgeSource): Citatio
     sourceId: chunk.sourceId,
     chunkId: chunk.id,
     locator: chunk.locator,
-    title: source?.title
+    title: source?.title,
+    page: chunk.provenance?.page,
+    bbox: chunk.provenance?.bbox,
+    assetPath: chunk.provenance?.assetPath
   };
 }
 
@@ -112,6 +120,9 @@ export function sourceChunkToLangChainDocument(
       license: source?.license,
       usage: source?.usage,
       tags: chunk.tags,
+      modality: chunk.modality ?? "text",
+      provenance: chunk.provenance,
+      trace: chunk.trace,
       citation
     }
   });
@@ -187,6 +198,8 @@ function retrievalHitToToolHit(hit: RetrievalHit, source?: KnowledgeSource): Xua
     text: hit.chunk.text,
     score: hit.score,
     tags: hit.chunk.tags,
+    modality: hit.chunk.modality ?? "text",
+    trace: hit.chunk.trace,
     citation: hit.citation,
     source: source
       ? {

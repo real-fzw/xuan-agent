@@ -9,7 +9,8 @@
     "typecheck": "tsc -p tsconfig.workspace.json --noEmit",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "demo:ziwei": "pnpm build && pnpm --filter @xuan/cli demo:ziwei"
+    "demo:ziwei": "pnpm build && pnpm --filter @xuan/cli demo:ziwei",
+    "rag:index-private": "pnpm --filter @xuan/ingest build && node tools/ingest/dist/index.js index-private"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

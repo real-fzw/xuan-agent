@@ -60,6 +60,48 @@ describe("LangChain adapter", () => {
     });
   });
 
+  it("preserves image caption provenance and inference trace", () => {
+    const captionIndex: RagIndex = {
+      ...fixtureIndex,
+      chunks: [
+        {
+          id: "original-note#image-1",
+          sourceId: "original-note",
+          locator: "image chart-1.png",
+          text: "一张用于检索的紫微斗数命盘案例图。",
+          tags: ["紫微斗数", "命盘案例"],
+          modality: "image-caption",
+          provenance: {
+            sourcePath: "private/chart-1.png",
+            assetPath: "private/chart-1.png",
+            extractorId: "image-caption-worker",
+            extractorVersion: "0.1.0"
+          },
+          trace: {
+            rulesetId: "rag.image-caption-v1",
+            formulaId: "caption.prompt.ziwei-image-v1",
+            sourceHint: "private/chart-1.png",
+            confidence: "experimental"
+          }
+        }
+      ]
+    };
+
+    const [document] = ragIndexToLangChainDocuments(captionIndex);
+
+    expect(document?.metadata).toMatchObject({
+      modality: "image-caption",
+      citation: {
+        assetPath: "private/chart-1.png"
+      },
+      trace: {
+        rulesetId: "rag.image-caption-v1",
+        formulaId: "caption.prompt.ziwei-image-v1",
+        confidence: "experimental"
+      }
+    });
+  });
+
   it("wraps the local retriever as a LangChain BaseRetriever", async () => {
     const retriever = createLangChainRetrieverFromIndex(fixtureIndex, { topK: 1 });
     const documents = await retriever.invoke("紫微星");

@@ -27,6 +27,18 @@ XuanAgent 支持 RAG，但仓库本身不得在未获授权的情况下包含版
 
 即使使用 LangChain.js、向量库或其他 RAG 框架，私有文本、OCR 结果、embedding、向量索引和可还原原文的检索缓存也只能留在这些本地私有目录中。
 
+## 外部模型与 API
+
+把图片、文档或原文片段发送给外部模型，属于将私有资料交给第三方处理。默认禁止自动上传 `book/`、`corpus/private/` 和 `data/private/` 中的内容。
+
+远程 Caption 必须满足：
+
+- 用户已经确认自己有权处理该资料，并了解供应商的数据保留与训练政策。
+- 通过 `XUAN_ALLOW_REMOTE_PRIVATE=true` 显式开启，不能仅凭配置了 API key 就自动上传。
+- API key 只从环境变量读取，不写入代码、日志、artifact 或 Git。
+- artifact 记录 provider、model、prompt 版本、用量和推断 trace，但不记录密钥。
+- Caption 只能作为 `experimental` 检索材料，不能成为排盘事实。
+
 导入管道应该保存以下元数据：
 
 - 来源标题

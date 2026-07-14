@@ -2,6 +2,14 @@ import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "n
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { KnowledgeSource, RagIndex, SourceChunk } from "@xuan/rag";
+import {
+  captionArtifactToRagRecords,
+  loadImageCaptionArtifacts
+} from "./vision-caption.js";
+import {
+  documentArtifactToRagRecords,
+  loadDocumentExtractionArtifacts
+} from "./document-extraction.js";
 
 export interface IngestPlan {
   inputDir: string;
@@ -15,7 +23,9 @@ export interface PrivateBookFile {
   sizeBytes: number;
   sourceId: string;
   usage: "local-private-only";
-  processing: "metadata-only" | "extract-text" | "ocr-image" | "unsupported";
+  processing: "metadata-only" | "extract-text" | "caption-image" | "unsupported";
+  primaryExtractor: "native-text" | "docling" | "apache-tika" | "image-caption" | "none";
+  fallbackExtractors: Array<"mineru" | "apache-tika">;
 }
 
 export interface PrivateBookManifest {
@@ -35,7 +45,8 @@ export interface PrivateRagIndexSummary {
 }
 
 const TEXT_EXTENSIONS = new Set([".txt", ".md"]);
-const DOCUMENT_EXTENSIONS = new Set([".pdf", ".doc", ".docx"]);
+const DOCLING_EXTENSIONS = new Set([".pdf", ".docx", ".pptx"]);
+const TIKA_EXTENSIONS = new Set([".doc", ".ppt"]);
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 const IGNORED_FILENAMES = new Set([".ds_store"]);
 const IGNORED_EXTENSIONS = new Set([".qkdownloading"]);
@@ -57,15 +68,40 @@ function processingForExtension(extension: string): PrivateBookFile["processing"
     return "extract-text";
   }
 
-  if (DOCUMENT_EXTENSIONS.has(extension)) {
+  if (DOCLING_EXTENSIONS.has(extension) || TIKA_EXTENSIONS.has(extension)) {
     return "extract-text";
   }
 
   if (IMAGE_EXTENSIONS.has(extension)) {
-    return "ocr-image";
+    return "caption-image";
   }
 
   return "unsupported";
+}
+
+function extractorPlanForExtension(
+  extension: string
+): Pick<PrivateBookFile, "primaryExtractor" | "fallbackExtractors"> {
+  if (TEXT_EXTENSIONS.has(extension)) {
+    return { primaryExtractor: "native-text", fallbackExtractors: [] };
+  }
+
+  if (DOCLING_EXTENSIONS.has(extension)) {
+    return {
+      primaryExtractor: "docling",
+      fallbackExtractors: extension === ".pdf" ? ["mineru"] : ["apache-tika"]
+    };
+  }
+
+  if (TIKA_EXTENSIONS.has(extension)) {
+    return { primaryExtractor: "apache-tika", fallbackExtractors: [] };
+  }
+
+  if (IMAGE_EXTENSIONS.has(extension)) {
+    return { primaryExtractor: "image-caption", fallbackExtractors: [] };
+  }
+
+  return { primaryExtractor: "none", fallbackExtractors: [] };
 }
 
 function walkFiles(inputDir: string, currentDir: string = inputDir): string[] {
@@ -92,13 +128,15 @@ export function createPrivateBookManifest(
     .map((path) => {
       const relativePath = relative(inputDir, path);
       const extension = extname(path).toLowerCase();
+      const extractorPlan = extractorPlanForExtension(extension);
       return {
         path: relativePath,
         extension: extension.replace(/^\./, ""),
         sizeBytes: statSync(path).size,
         sourceId: sourceIdFromPath(relativePath),
         usage: "local-private-only" as const,
-        processing: processingForExtension(extension)
+        processing: processingForExtension(extension),
+        ...extractorPlan
       };
     })
     .filter((file) => !IGNORED_FILENAMES.has(basename(file.path).toLowerCase()))
@@ -111,7 +149,8 @@ export function createPrivateBookManifest(
     policy: "local-private-only",
     files,
     warnings: [
-      "This manifest intentionally contains metadata only. Do not commit extracted text, OCR output, embeddings, or copyrighted source files.",
+      "This manifest intentionally contains metadata only. Do not commit extracted text, image captions, embeddings, or copyrighted source files.",
+      "Images use a caption pipeline, not OCR. Captions are model inferences and must retain trace metadata.",
       "Write derived private indexes under data/private/ or corpus/private/, both ignored by Git."
     ]
   };
@@ -128,7 +167,7 @@ export function writePrivateBookManifest(
   return manifest;
 }
 
-function inferTagsFromPath(path: string): string[] {
+export function inferTagsFromPath(path: string): string[] {
   const tags = new Set<string>(["本地私有"]);
   const lower = path.toLowerCase();
   const tagHints: Array<readonly [string, string]> = [
@@ -232,7 +271,7 @@ export function createPrivateTextRagIndex(
     chunks,
     warnings: [
       "This index may contain private copyrighted text. Keep it under data/private/ or corpus/private/ and never commit it.",
-      `${manifest.files.length - textFiles.length} files were skipped by the text-only indexer. PDF, Word, image OCR, and archive extractors should be added as explicit local-private plugins.`
+      `${manifest.files.length - textFiles.length} files were skipped by the text-only indexer. Document extraction and image captioning run as explicit local-private plugins.`
     ]
   };
 }
@@ -256,8 +295,82 @@ export function writePrivateTextRagIndex(
   };
 }
 
+export function createPrivateRagIndex(
+  inputDir: string,
+  captionDir: string,
+  documentDir?: string,
+  now: () => Date = () => new Date()
+): RagIndex {
+  const textIndex = createPrivateTextRagIndex(inputDir, now);
+  const captionRecords = loadImageCaptionArtifacts(captionDir).map(
+    captionArtifactToRagRecords
+  );
+  const documentRecords = documentDir
+    ? loadDocumentExtractionArtifacts(documentDir).map((artifact) =>
+        documentArtifactToRagRecords(artifact, inferTagsFromPath(artifact.sourcePath))
+      )
+    : [];
+
+  return {
+    ...textIndex,
+    sources: [
+      ...textIndex.sources,
+      ...documentRecords.map((record) => record.source),
+      ...captionRecords.map((record) => record.source)
+    ],
+    chunks: [
+      ...textIndex.chunks,
+      ...documentRecords.flatMap((record) => record.chunks),
+      ...captionRecords.map((record) => record.chunk)
+    ],
+    warnings: [
+      ...textIndex.warnings,
+      `${documentRecords.length} private document extraction artifacts were loaded.`,
+      `${captionRecords.length} private image captions were loaded. Captions are model-generated retrieval aids, not deterministic chart facts.`
+    ]
+  };
+}
+
+export function writePrivateRagIndex(
+  inputDir: string,
+  captionDir: string,
+  documentDir: string,
+  outputFile: string,
+  now: () => Date = () => new Date()
+): PrivateRagIndexSummary {
+  const index = createPrivateRagIndex(inputDir, captionDir, documentDir, now);
+  const manifest = createPrivateBookManifest(inputDir, now);
+  const indexedSourceIds = new Set(index.sources.map((source) => source.id));
+  const skippedCount = manifest.files.filter(
+    (file) => !indexedSourceIds.has(file.sourceId)
+  ).length;
+  mkdirSync(dirname(outputFile), { recursive: true });
+  writeFileSync(outputFile, `${JSON.stringify(index, null, 2)}\n`, "utf8");
+
+  return {
+    inputDir,
+    outputFile,
+    sourceCount: index.sources.length,
+    chunkCount: index.chunks.length,
+    skippedCount
+  };
+}
+
 function runCli(argv: string[]): void {
   const command = argv[2] ?? "manifest";
+
+  if (command === "index-private") {
+    const inputDir = resolve(argv[3] ?? "book");
+    const captionDir = resolve(argv[4] ?? "data/private/captions");
+    const documentDir = resolve(argv[5] ?? "data/private/extraction-artifacts");
+    const outputFile = resolve(argv[6] ?? "data/private/rag-index.json");
+    const summary = writePrivateRagIndex(inputDir, captionDir, documentDir, outputFile);
+
+    console.log(
+      `Wrote private RAG index: ${outputFile} (${summary.sourceCount} sources, ${summary.chunkCount} chunks, ${summary.skippedCount} skipped)`
+    );
+    return;
+  }
 
   if (command === "index-text") {
     const inputDir = resolve(argv[3] ?? "book");
