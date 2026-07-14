@@ -182,8 +182,10 @@ pnpm rag:index-private
 - 14 KB 旧 DOC：由 macOS `textutil` 提取为 1 个块。
 - 679 KB PDF：关闭 OCR 和表格结构后约 19 秒，生成 929 个块。
 - OpenAI-compatible Caption API：合成图冒烟测试成功，模型未遵守 JSON 输出，纯文本降级路径正常，trace 完整。
-- 正式私有索引：5 个真实来源、1,021 个文本块；合成 Caption 只进入独立 smoke index。
-- `@xuan/ingest` 当前共 10 个测试；全仓 typecheck 需要在每次契约调整后继续运行。
+- 2026-07-14 紫微专用筛选：只保留 3 份天纪/紫微 extraction artifact，另有 2 个原生文本来源；风水等无关 artifact 已移出正式索引目录。
+- 两份补充 PDF 分别生成 12,755 和 2,139 个结构块；合并后正式私有索引为 5 个来源、14,985 个块。
+- 合成 Caption 只进入独立 smoke index，没有混入正式私有索引。
+- `@xuan/ingest` 当前共 12 个测试；全仓 typecheck 需要在每次契约调整后继续运行。
 
 这些数字只说明链路可运行，不代表抽取质量已经通过语义准确性 benchmark。尤其是 PDF 阅读顺序、重复页眉页脚和 Caption 准确率仍需人工样本集评估。
 

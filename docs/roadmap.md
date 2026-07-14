@@ -39,6 +39,8 @@
 - Apache Tika 旧 Office 提取适配器。
 - 图片 Caption 管道；保留原图 citation 和模型推断 trace，不使用 OCR。
 - MinerU 复杂 PDF 可选回退插件。
+- 30 题紫微检索基线：Hit@K、MRR 和无正文泄露的评测 runner。
+- 人工相关性标注、中文 BM25、embedding 与 rerank 对照评测。
 
 ## 4. Agent 工作台
 

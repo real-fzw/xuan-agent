@@ -15,7 +15,7 @@
 
 同日 manifest 路由验证覆盖本地 83 个文件：53 个图片文件进入 Caption 路由，12 个进入 Docling 路由，14 个进入 Apache Tika 路由，2 个走原生文本，2 个暂不支持。这里只提交数量和管道代码，不提交私有文件名、正文或 Caption。
 
-实际接入后，本机旧 Office 因缺少 Java 暂由 macOS `textutil` 处理；Apache Tika 保留为跨平台目标。正式私有索引已从 2 个来源、43 个块扩展为 5 个真实来源、1,021 个块。API Caption 使用合成图完成 smoke test，没有把私有图片发送到外部服务。
+实际接入后，本机旧 Office 因缺少 Java 暂由 macOS `textutil` 处理；Apache Tika 保留为跨平台目标。2026-07-14 进一步筛选出 3 份紫微/天纪相关 extraction artifact，风水等无关 artifact 移出正式索引目录。当前正式私有索引共 5 个真实来源、14,985 个块。API Caption 使用合成图完成 smoke test，没有把私有图片发送到外部服务。
 
 ## 设计目标
 
@@ -69,6 +69,8 @@ flowchart TD
 | 文档提取 worker | `tools/extract/worker.py` | 使用 Docling 或 macOS textutil 生成本地 extraction artifact |
 | 图片 Caption | `tools/ingest/src/vision-caption.ts` | OpenAI-compatible 视觉 API、上传保护和 Caption trace |
 | 文档 artifact | `tools/ingest/src/document-extraction.ts` | 校验并转换文档 extraction artifact |
+| 检索评测 | `tools/ingest/src/evaluate-retrieval.ts` | 运行 Hit@K、MRR 基线，输出中不包含私有正文 |
+| 紫微评测集 | `evals/rag/ziwei-retrieval.json` | 30 条原创问题与公开领域相关性词 |
 | Web API | `apps/web/src/server.ts` | 暴露 RAG status/search API |
 | 测试 | `packages/rag/src/*.test.ts`、`tools/ingest/src/index.test.ts` | 锁住 citation、metadata 和私有索引行为 |
 
@@ -218,6 +220,31 @@ node tools/ingest/dist/index.js index-private \
 ## 当前检索逻辑
 
 当前检索器是 `MemoryRetriever`，不是向量库。
+
+## 紫微检索评测基线
+
+2026-07-14 增加 `ziwei-retrieval-v1`，用于让后续每次检索器调整都有可比较的起点。评测集包含 30 个原创主题，覆盖命宫/身宫、十二宫、五行局、十四主星、四化、辅煞星、三方四正、运限和十二宫解释入口。
+
+运行方式：
+
+```bash
+pnpm rag:eval
+```
+
+首版相关性判定采用 `expectedAnyOf` 公开领域词：如果召回 chunk 的正文或标签包含任一预期词，则计为相关。runner 内部可以读取本地私有索引，但终端只输出用例 ID、首个相关结果排名和命中数量，不打印 chunk、snippet、书名或路径。
+
+在 5 个本地来源、14,985 个 chunk 上的首轮结果：
+
+| 指标 | 结果 |
+| --- | ---: |
+| Hit@1 | 0.8333 |
+| Hit@3 | 0.9667 |
+| Hit@5 | 0.9667 |
+| MRR | 0.8944 |
+
+唯一完全漏召回的用例是 `stars-fourteen`。当前分词器只按空白和标点拆词，无法可靠处理“十四主星”等中文复合概念与同义表达。这一结果作为基线保留，不通过修改题目掩盖。下一步用 BM25 中文分词、embedding 语义召回和 rerank 做同一评测集的对照实验。
+
+这个基线仍有明确限制：`expectedAnyOf` 是弱标注，只能验证术语相关性，不能证明解释正确。后续应增加人工相关性等级、来源质量权重、难负例和 claim 级证据审查集。
 
 工作方式：
 
@@ -419,6 +446,8 @@ node tools/ingest/dist/index.js index-text book data/private/rag-index.json
 - LangChain retriever 可返回带 score/citation 的 document。
 - `xuan_rag_search` tool 返回 `groundingPolicy` 和 citation。
 - Memory retriever 支持按 tag 自由文本命中。
+- 检索评测计算 Hit@K 和 MRR，且格式化结果不泄露 chunk 正文。
+- 评测集校验拒绝重复用例 ID 和无相关性词的无效用例。
 
 ## 下一阶段建议
 

@@ -42,6 +42,14 @@ pnpm demo:ziwei
 - macOS `textutil` 提取旧 DOC/PPT；跨平台 Apache Tika 适配仍在后续计划中。
 - OpenAI-compatible 视觉 API 生成图片 Caption；私有图片远程上传默认禁止。
 - 将原生文本、文档 extraction artifact 和 Caption artifact 合并为同一个带 provenance/trace 的私有 RAG index。
+- 用仓库内原创的 30 题紫微检索集运行 Hit@K 和 MRR 基线；评测输出不包含私有正文。
+
+生成本地索引并运行检索评测：
+
+```bash
+pnpm rag:index-private
+pnpm rag:eval
+```
 
 实现和安全边界见 [资料提取与图片 Caption 管道](docs/extraction-pipeline.md)。
 
